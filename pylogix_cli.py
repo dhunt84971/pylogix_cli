@@ -36,11 +36,12 @@ ERROR - No IPAdress specified.  Use IPAddress command.
 the following import is only necessary because eip.py is not in this directory
 '''
 import sys
+import pylogix
 
 #sys.path.append('..')
 
 from pylogix import PLC
-
+version = "0.1.0"
 comm = PLC()
 
 #region CONSOLE COMMAND DEFINITIONS
@@ -66,6 +67,9 @@ def write(args):
     ret = comm.Write(words[0], words[1])
     print(ret)
 
+def getVersion(args):
+    print("pylogix_cli v" + version + ", pylogix v" + pylogix.__version__)
+
 def getHelp(args):
     print('''
     Commands: (Not case sensitive.)
@@ -76,6 +80,7 @@ def getHelp(args):
         SetPLCTime                  - Sets the PLC time to the current time.
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
+        Version                     - Returns the version of pylogix_cli and pylogix.
     ''')
 
 #endregion CONSOLE COMMAND DEFINITIONS
@@ -96,6 +101,8 @@ def parseCommand(command):
             read(getAdditionalArgs(command))
         elif (words[0] == "write"):
             write(getAdditionalArgs(command))
+        elif (words[0] == "version"):
+            getVersion(getAdditionalArgs(command))
         else:
             print("ERROR - Unrecognized command.  Enter Help for a list of commands.")
 
