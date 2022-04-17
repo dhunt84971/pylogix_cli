@@ -14,20 +14,20 @@ pylogix_cli 192.168.1.10 Read CurrentScreen
 Console app example:
 ```
 pylogix_cli 192.168.1.10
-> Read CurrentScreen
-12
-> .quit
+pylogix_cli> Read CurrentScreen
+None 12 Success
+pylogix_cli> .quit
 ```
 
 - or -
 ```
 pylogix_cli
-> Read CurrentScreen
+pylogix_cli> Read CurrentScreen
 ERROR - No IPAdress specified.  Use IPAddress command.
-> IPAddress 192.168.1.10
-> Read CurrentScreen
-12
-> .quit
+pylogix_cli> IPAddress 192.168.1.10
+pylogix_cli> Read CurrentScreen
+None 12 Success
+pylogix_cli> .quit
 ```
 
 ## The pylogix Project

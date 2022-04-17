@@ -100,10 +100,10 @@ def parseCommand(command):
             print("ERROR - Unrecognized command.  Enter Help for a list of commands.")
 
 def commandLoop():
-    command = input("pylogix> ").casefold()
+    command = input("pylogix_cli> ").casefold()
     while (command != "quit"):
         parseCommand(command)
-        command = input("pylogix> ").casefold()
+        command = input("pylogix_cli> ").casefold()
 
 #endregion COMMAND LOOP
 
