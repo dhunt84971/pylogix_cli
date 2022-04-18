@@ -4,6 +4,7 @@ The pylogix_cli application is intended to encaspulate all of the pylogix comman
 handy for systems where an end-user does not have the Rockwell software, but needs to update a value, set the time on the controller or read or write settings from or to the target PLC.  
 
 Click below to download the current standalone executable for Windows 7/10:
+
 https://github.com/dhunt84971/pylogix_cli/releases/download/v0.1.0/pylogix_cli.exe 
 
 
