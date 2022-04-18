@@ -6,9 +6,10 @@ handy for systems where an end-user does not have the Rockwell software, but nee
 Execution of the application will take the form of a single command or a shell console application allowing multiple commands to be executed.
 
 ## Examples of Usage
-Single command syntax:
+Single command syntax example:
 ```
 pylogix_cli 192.168.1.10 Read CurrentScreen
+None 12 Success
 ```
 
 Console app example:
@@ -16,10 +17,10 @@ Console app example:
 pylogix_cli 192.168.1.10
 pylogix_cli> Read CurrentScreen
 None 12 Success
-pylogix_cli> .quit
+pylogix_cli> quit
 ```
 
-- or -
+OR
 ```
 pylogix_cli
 pylogix_cli> Read CurrentScreen
@@ -27,7 +28,7 @@ ERROR - No IPAdress specified.  Use IPAddress command.
 pylogix_cli> IPAddress 192.168.1.10
 pylogix_cli> Read CurrentScreen
 None 12 Success
-pylogix_cli> .quit
+pylogix_cli> quit
 ```
 
 ## The pylogix Project
