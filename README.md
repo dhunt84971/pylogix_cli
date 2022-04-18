@@ -24,7 +24,7 @@ OR
 ```
 pylogix_cli
 pylogix_cli> Read CurrentScreen
-ERROR - No IPAdress specified.  Use IPAddress command.
+ERROR - No IPAddress specified.  Use IPAddress command.
 pylogix_cli> IPAddress 192.168.1.10
 pylogix_cli> Read CurrentScreen
 None 12 Success
