@@ -70,6 +70,11 @@ def write(args):
 def getVersion(args):
     print("pylogix_cli v" + version + ", pylogix v" + pylogix.__version__)
 
+def getTagList(args):
+    tags = comm.GetTagList()
+    for tag in tags.Value:
+        print(tag.TagName, tag.DataType)
+
 def getHelp(args):
     print('''
     Commands: (Not case sensitive.)
@@ -81,6 +86,7 @@ def getHelp(args):
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
+        GetTagList                  - Returns the list of tags in the target PLC.
     ''')
 
 #endregion CONSOLE COMMAND DEFINITIONS
@@ -103,6 +109,8 @@ def parseCommand(command):
             write(getAdditionalArgs(command))
         elif (words[0] == "version"):
             getVersion(getAdditionalArgs(command))
+        elif (words[0] == "gettaglist"):
+            getTagList(getAdditionalArgs(command))
         else:
             print("ERROR - Unrecognized command.  Enter Help for a list of commands.")
 
