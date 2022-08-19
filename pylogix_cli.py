@@ -75,6 +75,13 @@ def getTagList(args):
     for tag in tags.Value:
         print(tag.TagName, tag.DataType)
 
+def validateTags(args):
+    fileName = args
+    with open(fileName, encoding="utf-8") as f:
+        for line in f:
+            ret = comm.Read(line)
+            print(ret)
+
 def getHelp(args):
     print('''
     Commands: (Not case sensitive.)
