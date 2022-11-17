@@ -50,6 +50,22 @@ https://github.com/dmroeder/pylogix
 
 **Special thanks to dmroeder and all the contributors that make pylogix possible.**
 
+## Currently Implemented Functions
+```
+        Help                        - Displays this list of commands.
+        IPAddress <ip address>      - Sets the IP address for the target PLC.
+        Quit                        - Leave console application.
+        GetPLCTime                  - Returns the PLC time.
+        SetPLCTime                  - Sets the PLC time to the current time.
+        GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
+        GetDeviceProperties         - Gets the properties of the connected device.
+        Read <tag>                  - Returns the specified tag's value from the target PLC.
+        Write <tag> <value>         - Sets the specified tag's value in the target PLC.
+        Version                     - Returns the version of pylogix_cli and pylogix.
+        GetTagList                  - Returns the list of tags in the target PLC.
+```
+(Commands are not case sensitive.)
+
 ## Development Environment
 In order to build the executable using pyinstaller, first clone this repository and then install both pylogix and pyinstaller using pip.
 
