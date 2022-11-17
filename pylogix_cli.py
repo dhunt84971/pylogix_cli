@@ -41,7 +41,7 @@ import pylogix
 #sys.path.append('..')
 
 from pylogix import PLC
-version = "0.1.0"
+version = "0.1.1"
 comm = PLC()
 
 #region CONSOLE COMMAND DEFINITIONS
@@ -55,6 +55,14 @@ def getPLCTime(args):
 
 def setPLCTime(args):
     ret = comm.SetPLCTime()
+    print(ret)
+
+def getDeviceProperties(args):
+    ret = comm.GetDeviceProperties()
+    print(ret)
+
+def getModuleProperties(args):
+    ret = comm.GetModuleProperties(args)
     print(ret)
 
 def read(args):
@@ -90,6 +98,8 @@ def getHelp(args):
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
         SetPLCTime                  - Sets the PLC time to the current time.
+        GetModuleProperties <slot>code  - Gets the properties of the module in the specified slot.
+        GetDeviceProperties         - Gets the properties of the connected device.
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
@@ -110,6 +120,10 @@ def parseCommand(command):
             getPLCTime(getAdditionalArgs(command))
         elif (words[0] == "setplctime"):
             setPLCTime(getAdditionalArgs(command))
+        elif (words[0] == "getdeviceproperties"):
+            getDeviceProperties(getAdditionalArgs(command))
+        elif (words[0] == "getmoduleproperties"):
+            getModuleProperties(getAdditionalArgs(command))
         elif (words[0] == "read"):
             read(getAdditionalArgs(command))
         elif (words[0] == "write"):
