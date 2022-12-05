@@ -18,7 +18,7 @@ Console app example:
 pylogix_cli 192.168.1.10
 > Read CurrentScreen
 12
-> .quit
+> quit
 
 - or -
 
@@ -28,7 +28,7 @@ ERROR - No IPAdress specified.  Use IPAddress command.
 > IPAddress 192.168.1.10
 > Read CurrentScreen
 12
-> .quit
+> quit
 
 '''
 
