@@ -41,7 +41,7 @@ import pylogix
 #sys.path.append('..')
 
 from pylogix import PLC
-version = "0.1.1"
+version = "0.1.2"
 comm = PLC()
 
 #region CONSOLE COMMAND DEFINITIONS
@@ -62,7 +62,7 @@ def getDeviceProperties(args):
     print(ret)
 
 def getModuleProperties(args):
-    ret = comm.GetModuleProperties(args)
+    ret = comm.GetModuleProperties(int(args))
     print(ret)
 
 def read(args):
