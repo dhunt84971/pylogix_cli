@@ -62,6 +62,9 @@ def getDeviceProperties(args):
     print(ret)
 
 def getModuleProperties(args):
+    if not args.isnumeric():
+        print("ERROR - Invalid argument.  Please specify a slot number.")
+        return
     ret = comm.GetModuleProperties(int(args))
     print(ret)
 
