@@ -59,12 +59,18 @@ https://github.com/dmroeder/pylogix
         SetPLCTime                  - Sets the PLC time to the current time.
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
+        * GetFaultCodes             - Gets the Type and Code of the current controller fault.
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
         GetTagList                  - Returns the list of tags in the target PLC.
+        Output (Raw | Readable)     - Sets the output format.  Raw is the default.     
+
+* - Is not a standard pylogix command.
 ```
 (Commands are not case sensitive.)
+
+
 
 ## Development Environment
 In order to build the executable using pyinstaller, first clone this repository and then install both pylogix and pyinstaller using pip.
