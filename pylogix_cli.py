@@ -38,7 +38,7 @@ the following import is only necessary because eip.py is not in this directory
 import sys
 import pylogix
 from pylogix.lgx_response import Response
-from struct import pack, unpack_from
+from struct import pack, unpack, unpack_from
 
 #sys.path.append('..')
 
@@ -49,6 +49,70 @@ output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
 
 #region CUSTOM COMMAND CODE
+def get_cip_attribute(plc, class_inst_id, attribute_id, instance_id, offset = 54):
+    """
+    Requests the cip attribute given the class, attribute and instance.
+    """
+    conn = plc.conn.connect(False)
+    if not conn[0]:
+        return Response(None, None, conn[1])
+
+    # Future for when classes > 255 are implemented.
+    # cip_size=0x00
+
+    # if class_inst_id <= 255:
+    #     cip_size = cip_size + 1
+    #     cip_class_type = 0x20
+    #     cip_class_pack_format = 'BB'
+    # else:
+    #     cip_size = cip_size + 2
+    #     cip_class_type = 0x21
+    #     cip_class_pack_format = 'HH'
+
+    # if instance_id <= 255:
+    #     cip_size = cip_size + 1
+    #     cip_instance_type = 0x24
+    #     cip_inst_pack_format = 'BB'
+    # else:
+    #     cip_size = cip_size + 2
+    #     cip_instance_type = 0x25
+    #     cip_inst_pack_format = 'HH'
+        
+    if instance_id <= 255:
+        cip_size = 0x02
+        cip_instance_type = 0x24
+        pack_format = '<BBBBBBH1H'
+    else:
+        cip_size = 0x03
+        cip_instance_type = 0x25
+        pack_format = '<BBBBHHHH'
+
+    cip_service = 0x03
+    cip_class_type = 0x20
+    cip_class = class_inst_id
+    cip_instance = instance_id
+    cip_count = 0x01
+    cip_attribute = attribute_id
+
+    request = pack(pack_format,
+                    cip_service,
+                    cip_size,
+                    cip_class_type,
+                    cip_class,
+                    cip_instance_type,
+                    cip_instance,
+                    cip_count,
+                    cip_attribute)
+    
+    status, ret_data = plc.conn.send(request, False)
+    if status == 0:
+        value = ret_data[offset:]
+    else:
+        value = None
+    return Response(None, value, status)
+
+
+
 """
 Credit to dmroeder. https://github.com/dmroeder
 """
@@ -82,14 +146,44 @@ def get_controller_fault(plc):
 
     if status == 0:
         data = ret_data[44:]
-        major = unpack_from("<H", data, 20)[0]
-        minor = unpack_from("<H", data, 22)[0]
+        type = unpack_from("<H", data, 20)[0]
+        code = unpack_from("<H", data, 22)[0]
+        taskInstance = unpack_from("<H", data, 24)[0]
+        programInstance = unpack_from("<H", data, 28)[0]
+        routineInstance = unpack_from("<H", data, 32)[0]
+        detail = unpack_from("@8s", data, 36)[0]
+        detailInt = unpack_from("<H", data, 36)[0]
+        detailDint = unpack_from("<I", data, 36)[0]
     else:
-        major = None
-        minor = None
+        type = None
+        code = None
+        taskInstance = None
+        programInstance = None
+        routineInstance = None
 
-    return Response(None, (major, minor), status)
+    return Response(None, (type, code, taskInstance, programInstance, routineInstance, detail, detailInt, detailDint), status)
 
+def get_task_name(plc, instance):
+    response = get_cip_attribute(comm, 112, 24, instance)
+    return response
+
+def get_program_name(plc, instance):
+    response = get_cip_attribute(comm, 104, 28, instance)
+    return response
+
+def get_module_slot(plc, instance):
+    response = get_cip_attribute(comm, 104, 28, instance, 50)
+    value = unpack('<I', response.Value)[0]
+    response[1] = value
+    return response
+
+def get_controller_fault_info(plc):
+    fault_codes = get_controller_fault(plc)
+    # Is fault is IO related, routine instance = 34 else assume program fault.
+    if fault_codes.Value[4] == 34:
+        failure_type = "IO Module"
+        
+    return
 
 #endregion CUSTOM COMMAND CODE
 
@@ -171,6 +265,7 @@ def getHelp(args):
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         GetFaultCodes               - Gets the Type and Code of the current controller fault.
+        GetFaultInfo
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
