@@ -60,6 +60,7 @@ https://github.com/dmroeder/pylogix
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         * GetFaultCodes             - Gets the Type and Code of the current controller fault.
+        * GetFaultInfo              - Gets the Module slot for an IO fault or location for a logic fault.
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
