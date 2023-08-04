@@ -143,47 +143,53 @@ def get_controller_fault(plc):
                     cip_instance)
 
     status, ret_data = plc.conn.send(request, False)
+    value = {"type":None, "code":None, "id1":None, "id2":None, "id3":None, "data":None}
 
     if status == 0:
         data = ret_data[44:]
-        type = unpack_from("<H", data, 20)[0]
-        code = unpack_from("<H", data, 22)[0]
-        taskInstance = unpack_from("<H", data, 24)[0]
-        programInstance = unpack_from("<H", data, 28)[0]
-        routineInstance = unpack_from("<H", data, 32)[0]
-        detail = unpack_from("@8s", data, 36)[0]
-        detailInt = unpack_from("<H", data, 36)[0]
-        detailDint = unpack_from("<I", data, 36)[0]
-    else:
-        type = None
-        code = None
-        taskInstance = None
-        programInstance = None
-        routineInstance = None
+        value["type"] = unpack_from("<H", data, 20)[0]
+        value["code"] = unpack_from("<H", data, 22)[0]
+        value["id1"] = unpack_from("<H", data, 24)[0]
+        value["id2"] = unpack_from("<H", data, 28)[0]
+        value["id3"] = unpack_from("<H", data, 32)[0]
+        value["data"] = unpack_from("<H", data, 36)[0]
 
-    return Response(None, (type, code, taskInstance, programInstance, routineInstance, detail, detailInt, detailDint), status)
+    return Response(None, value, status)
 
 def get_task_name(plc, instance):
-    response = get_cip_attribute(comm, 112, 24, instance)
+    response = get_cip_attribute(plc, 112, 24, instance)
+    value = response.Value.decode()
+    response = Response(None, value, response.Status)
     return response
 
 def get_program_name(plc, instance):
-    response = get_cip_attribute(comm, 104, 28, instance)
+    response = get_cip_attribute(plc, 104, 28, instance)
+    value = response.Value.decode()
+    response = Response(None, value, response.Status)
     return response
 
 def get_module_slot(plc, instance):
-    response = get_cip_attribute(comm, 104, 28, instance, 50)
+    response = get_cip_attribute(plc, 105, 10, instance, 50)
     value = unpack('<I', response.Value)[0]
-    response[1] = value
+    response = Response(None, value, response.Status)
     return response
 
 def get_controller_fault_info(plc):
     fault_codes = get_controller_fault(plc)
-    # Is fault is IO related, routine instance = 34 else assume program fault.
-    if fault_codes.Value[4] == 34:
-        failure_type = "IO Module"
-        
-    return
+    if fault_codes.Value["type"] == 0:
+        value = {"failure_type": "No Fault"}
+    elif fault_codes.Value["type"] == 3 and fault_codes.Value["code"] == 23:
+        value = {"failure_type": "IO Module Failure on Startup"}
+    # If fault is IO related, id3 = 34 else assume program fault.
+    elif fault_codes.Value["id3"] == 34:
+        slot = get_module_slot(plc, fault_codes.Value["id2"]).Value
+        value = {"failure_type": "Required IO Module Failed", "slot":slot}
+    else:
+        task = get_task_name(plc, fault_codes.Value["id1"]).Value
+        program = get_program_name(plc, fault_codes.Value["id2"]).Value
+        value = {"failure_type": "Logic", "task":task, "program":program}
+
+    return Response(None, value, fault_codes.Status)
 
 #endregion CUSTOM COMMAND CODE
 
@@ -217,6 +223,13 @@ def getFaultCodes(args):
         print(ret)
     elif (output_format == "readable"):
         print("Fault Type({}), Code({})".format(ret.Value[0], ret.Value[1]))
+    else:
+        print(ret)
+
+def getFaultInfo(args):
+    ret = get_controller_fault_info(comm)
+    if (output_format == "raw"):
+        print(ret)
     else:
         print(ret)
 
@@ -294,6 +307,8 @@ def parseCommand(command):
             getModuleProperties(getAdditionalArgs(command))
         elif (words[0] == "getfaultcodes"):
             getFaultCodes(getAdditionalArgs(command))
+        elif (words[0] == "getfaultinfo"):
+            getFaultInfo(getAdditionalArgs(command))
         elif (words[0] == "read"):
             read(getAdditionalArgs(command))
         elif (words[0] == "write"):
