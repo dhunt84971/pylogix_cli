@@ -43,7 +43,7 @@ from struct import pack, unpack, unpack_from
 #sys.path.append('..')
 
 from pylogix import PLC
-version = "0.1.3"
+version = "0.1.4"
 comm = PLC()
 output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
@@ -278,7 +278,7 @@ def getHelp(args):
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         GetFaultCodes               - Gets the Type and Code of the current controller fault.
-        GetFaultInfo
+        GetFaultInfo                - Gets the Module slot for an IO fault or location for a logic fault.
         Read <tag>                  - Returns the specified tag's value from the target PLC.
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
