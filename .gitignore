@@ -113,3 +113,9 @@ venv.bak/
 # pylogix configuration
 tests/plcConfig.py
 pylogix/testing/
+
+# Data Files
+*.csv
+*.CSV
+*.txt
+*.out

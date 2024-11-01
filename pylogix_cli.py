@@ -37,6 +37,10 @@ the following import is only necessary because eip.py is not in this directory
 '''
 import sys
 import pylogix
+import datetime
+import time
+
+from pathlib import Path
 from pylogix.lgx_response import Response
 from struct import pack, unpack, unpack_from
 
@@ -47,6 +51,7 @@ version = "0.1.4"
 comm = PLC()
 output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
+show_timing = False
 
 #region CUSTOM COMMAND CODE
 def get_cip_attribute(plc, class_inst_id, attribute_id, instance_id, offset = 54):
@@ -237,6 +242,26 @@ def read(args):
     ret = comm.Read(args)
     print(ret)
 
+def readTagFile(args):
+    if (comm == None):
+        print("ERROR - No IPAddress specified.  Use IPAddress command.")
+        return
+    words = args.split()
+    filename = words[0]
+    start_time = time.time()
+    outData = getTagValuesFromFile(filename)
+    if len(outData) > 0:
+        outFile = ""
+        if len(words) > 1:
+            outFile = words[1]
+        exec_time = time.time() - start_time
+        if len(outFile) > 0:
+            Path(outFile).write_text("\n".join(outData))
+        else:
+            print("\n".join(outData))
+        if (show_timing):
+            print("Executed in {0:7.3f} seconds.".format(exec_time))
+    
 def write(args):
     words = args.split()
     comm.Read(words[0])  # Always read the tag first since this will initiate the connection.
@@ -284,6 +309,10 @@ def getHelp(args):
         Version                     - Returns the version of pylogix_cli and pylogix.
         GetTagList                  - Returns the list of tags in the target PLC.
         Output (Raw | Readable)     - Sets the output format.  Raw is the default.        
+    
+    Multi-Tag Commands: (Filenames are case sensitive.)
+        ReadTagFile <filename> [<outfile>]
+            - Returns the values of the tags from the file.
           
     ''')
 
@@ -311,6 +340,8 @@ def parseCommand(command):
             getFaultInfo(getAdditionalArgs(command))
         elif (words[0] == "read"):
             read(getAdditionalArgs(command))
+        elif (words[0] == "readtagfile"):
+            readTagFile(getAdditionalArgs(command))
         elif (words[0] == "write"):
             write(getAdditionalArgs(command))
         elif (words[0] == "version"):
@@ -342,6 +373,31 @@ def getAdditionalArgs(command):
         return " ".join(words[1:])
     else:
         return ""
+    
+def getTagValues(tags):
+    outData = []
+    for tag in tags:
+        if len(tag) > 0:
+            try:
+                result = comm.Read(tag).Value
+                if str(result) == "None":
+                    result = "!ERROR!"
+            except Exception as error:
+                #print("Error reading: " + tag + " - " + str(error))
+                outData += [tag + "=!ERROR!"]
+                continue
+            outData += [tag + "=" + str(result)]
+    return outData
+
+def getTagValuesFromFile(filename):
+    tags = []
+    try:
+        tags = Path(filename).read_text().split("\n")
+    except Exception as error:
+        print("ERROR - Error opening the file {0}. {1}".format(filename, str(error)))
+        return []
+    outData = getTagValues(tags)
+    return outData
 #endregion HELPER FUNCTIONS
 
 #region MAIN
