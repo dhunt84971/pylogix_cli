@@ -71,7 +71,10 @@ https://github.com/dmroeder/pylogix
 ```
 (Commands are not case sensitive.)
 
-
+### Multi-Tag Commands:
+Filenames are case sensitive.
++ ```ReadTagFile <filename> [<outfile>]```
+    - Returns the values of the tags from the file.
 
 ## Development Environment
 In order to build the executable using pyinstaller, first clone this repository and then install both pylogix and pyinstaller using pip.
