@@ -47,7 +47,7 @@ from struct import pack, unpack, unpack_from
 #sys.path.append('..')
 
 from pylogix import PLC
-version = "0.1.4"
+version = "0.1.5"
 comm = PLC()
 output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
