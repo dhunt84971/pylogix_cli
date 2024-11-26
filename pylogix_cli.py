@@ -276,6 +276,11 @@ def getTagList(args):
     for tag in tags.Value:
         print(tag.TagName, tag.DataType)
 
+def getProgramsList(args):
+    programs = comm.GetProgramsList()
+    for program in programs.Value:
+        print(program)
+
 def validateTags(args):
     fileName = args
     with open(fileName, encoding="utf-8") as f:
@@ -308,6 +313,7 @@ def getHelp(args):
         Write <tag> <value>         - Sets the specified tag's value in the target PLC.
         Version                     - Returns the version of pylogix_cli and pylogix.
         GetTagList                  - Returns the list of tags in the target PLC.
+        GetProgramsList             - Returns the list of programs.
         Output (Raw | Readable)     - Sets the output format.  Raw is the default.        
     
     Multi-Tag Commands: (Filenames are case sensitive.)
@@ -348,6 +354,8 @@ def parseCommand(command):
             getVersion(getAdditionalArgs(command))
         elif (words[0] == "gettaglist"):
             getTagList(getAdditionalArgs(command))
+        elif (words[0] == "getprogramslist"):
+            getProgramsList(getAdditionalArgs(command))
         elif (words[0] == "output"):
             output(getAdditionalArgs(command))
         else:
