@@ -47,7 +47,7 @@ from struct import pack, unpack, unpack_from
 #sys.path.append('..')
 
 from pylogix import PLC
-version = "0.1.5"
+version = "0.1.6"
 comm = PLC()
 output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
@@ -261,11 +261,14 @@ def readTagFile(args):
             print("\n".join(outData))
         if (show_timing):
             print("Executed in {0:7.3f} seconds.".format(exec_time))
-    
+
 def write(args):
     words = args.split()
     comm.Read(words[0])  # Always read the tag first since this will initiate the connection.
-    ret = comm.Write(words[0], words[1])
+    if isInteger(words[1]):
+        ret = comm.Write(words[0], int(words[1]))
+    else:
+            ret = comm.Write(words[0], words[1])
     print(ret)
 
 def getVersion(args):
@@ -406,6 +409,12 @@ def getTagValuesFromFile(filename):
         return []
     outData = getTagValues(tags)
     return outData
+
+def isInteger(s):
+    if s[0] in ('-', '+'):
+        return s[1:].isdigit()
+    return s.isdigit()
+
 #endregion HELPER FUNCTIONS
 
 #region MAIN
