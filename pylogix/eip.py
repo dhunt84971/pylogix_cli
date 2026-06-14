@@ -820,18 +820,23 @@ class PLC(object):
                                                     (offset % 3600) // 60)
 
         if set_timezone:
-            # class 0x8b time zone attributes:
-            #   0x08 - STRING, a DINT length followed by a 60 byte buffer
-            #   0x09 - INT, the string buffer size (constant 60)
+            # The time zone string (class 0x8b, attribute 0x08) is variable
+            # length, so it cannot be reliably combined with other attributes
+            # in a single Set_Attribute_List - the controller cannot tell where
+            # it ends and the next attribute begins, which results in an
+            # "Attribute list error".  Write it in its own request, the way
+            # Logix Designer does.  Attribute 0x08 is a DINT length followed by
+            # a 60 byte character buffer.
             tz = timezone.encode("utf-8")[:60]
             tz_string = pack("<I", len(tz)) + tz + b"\x00" * (60 - len(tz))
-            tz_size = pack("<H", 60)
-            request = self._cip_message(0x04, 0x8b, 0x01,
-                                        [0x06, 0x08, 0x09, 0x0a],
-                                        [time_bytes, tz_string, tz_size, dst_value])
-        else:
-            request = self._cip_message(0x04, 0x8b, 0x01, [0x06, 0x0a],
-                                        [time_bytes, dst_value])
+            request = self._cip_message(0x04, 0x8b, 0x01, [0x08], [tz_string])
+            status, ret_data = self.conn.send(request)
+            if status != 0:
+                return Response(None, current_time, status)
+
+        # set the time and DST flag together (attributes 0x06 and 0x0a)
+        request = self._cip_message(0x04, 0x8b, 0x01, [0x06, 0x0a],
+                                    [time_bytes, dst_value])
 
         status, ret_data = self.conn.send(request)
 
