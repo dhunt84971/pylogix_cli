@@ -788,6 +788,55 @@ class PLC(object):
 
         return Response(None, value, status)
 
+    def _pc_timezone(self):
+        """
+        Determine the controller time zone string and DST flag that match
+        the PC running pylogix.  Returns (timezone_string, dst_flag).
+
+        On Windows the descriptive, DST-aware zone name is used, e.g.
+        "UTC-05:00 Eastern Time (US & Canada)", and the DST flag follows the
+        PC's current state so the controller applies the daylight hour.  A
+        bare "UTC+/-HH:MM" string carries no DST rule, so the controller would
+        ignore the DST flag and the clock would read an hour off while DST is
+        in effect.
+
+        On other platforms a plain "UTC+/-HH:MM" string built from the PC's
+        current (DST-adjusted) offset is used, with the DST flag left off
+        since the offset already accounts for daylight saving.
+        """
+        is_dst = 1 if time.localtime().tm_isdst > 0 else 0
+
+        # Windows: the time zone display name in the registry matches the
+        # names in Logix Designer's time zone list and carries DST rules.
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                    r"SYSTEM\CurrentControlSet\Control\TimeZoneInformation") as key:
+                key_name = winreg.QueryValueEx(key, "TimeZoneKeyName")[0]
+            subkey = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones" \
+                     + "\\" + key_name
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey) as key:
+                display = winreg.QueryValueEx(key, "Display")[0]
+            # "(UTC-05:00) Eastern Time (US & Canada)"
+            #   -> "UTC-05:00 Eastern Time (US & Canada)"
+            tz = display.replace("(", "", 1).replace(")", "", 1).strip()
+            if tz.startswith("UTC+") or tz.startswith("UTC-"):
+                return tz, is_dst
+        except Exception:
+            pass
+
+        # Fallback (non-Windows): a plain offset that already includes DST, so
+        # the DST flag is left off to avoid the controller double counting it.
+        if time.localtime().tm_isdst > 0:
+            offset = -time.altzone
+        else:
+            offset = -time.timezone
+        sign = "+" if offset >= 0 else "-"
+        offset = abs(offset)
+        tz = "UTC{}{:02d}:{:02d}".format(sign, offset // 3600,
+                                         (offset % 3600) // 60)
+        return tz, 0
+
     def _set_plc_time(self, dst, set_timezone=False, timezone=None):
         """
         Sets the PLC clock time (and optionally the time zone)
@@ -799,25 +848,24 @@ class PLC(object):
         current_time = int(time.time() * 1000000)
         time_bytes = pack("<Q", current_time)
 
-        # use the clock dst if none was provided
+        # an explicit time zone string implies the time zone should be set
+        if timezone is not None:
+            set_timezone = True
+
+        # derive the time zone string (and matching DST flag) from the PC when
+        # the caller asked to set the zone but didn't supply a string
+        if set_timezone and timezone is None:
+            timezone, auto_dst = self._pc_timezone()
+        else:
+            auto_dst = time.localtime().tm_isdst
+
+        # use the PC's DST state when the caller didn't specify one
         if dst is None:
-            dst = time.localtime().tm_isdst
+            dst = auto_dst
         # tm_isdst can be -1 (unknown), which the clock treats as off
         if dst < 0:
             dst = 0
-
         dst_value = pack("<B", dst)
-
-        # build the time zone string from the PC if one wasn't supplied
-        if timezone is not None:
-            set_timezone = True
-        elif set_timezone:
-            # standard (non-DST) offset, west of UTC is positive in time.timezone
-            offset = -time.timezone
-            sign = "+" if offset >= 0 else "-"
-            offset = abs(offset)
-            timezone = "UTC{}{:02d}:{:02d}".format(sign, offset // 3600,
-                                                    (offset % 3600) // 60)
 
         if set_timezone:
             # The time zone string (class 0x8b, attribute 0x08) is variable
