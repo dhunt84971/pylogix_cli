@@ -56,7 +56,7 @@ https://github.com/dmroeder/pylogix
         IPAddress <ip address>      - Sets the IP address for the target PLC.
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
-        SetPLCTime                  - Sets the PLC time to the current time.
+        SetPLCTime                  - Sets the PLC time and time zone to match this computer.
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         * GetFaultCodes             - Gets the Type and Code of the current controller fault.
@@ -77,12 +77,14 @@ Filenames are case sensitive.
     - Returns the values of the tags from the file.
 
 ## Development Environment
-In order to build the executable using pyinstaller, first clone this repository and then install both pylogix and pyinstaller using pip.
+A copy of the pylogix library is vendored in this repository (in the `pylogix/`
+folder) so the executable is self-contained and includes local modifications
+(such as SetPLCTime setting the controller time zone).  Because pylogix is
+bundled, only pyinstaller needs to be installed to build the executable.
 
 ```
 git clone https://github.com/dhunt84971/pylogix_cli.git
 cd pylogix_cli
-pip install pylogix
 pip install pyinstaller
 ```
 

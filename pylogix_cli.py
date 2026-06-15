@@ -36,18 +36,22 @@ ERROR - No IPAdress specified.  Use IPAddress command.
 the following import is only necessary because eip.py is not in this directory
 '''
 import sys
-import pylogix
+import os
 import datetime
 import time
 
 from pathlib import Path
-from pylogix.lgx_response import Response
 from struct import pack, unpack, unpack_from
 
-#sys.path.append('..')
+# Prefer the pylogix package vendored alongside this script (it contains
+# local modifications, e.g. SetPLCTime time zone support) over any version
+# that may be installed system-wide.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import pylogix
+from pylogix.lgx_response import Response
 from pylogix import PLC
-version = "0.1.6"
+version = "0.1.7"
 comm = PLC()
 output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
@@ -208,7 +212,8 @@ def getPLCTime(args):
     print(ret)
 
 def setPLCTime(args):
-    ret = comm.SetPLCTime()
+    # always set the controller's time zone to match this computer
+    ret = comm.SetPLCTime(set_timezone=True)
     print(ret)
 
 def getDeviceProperties(args):
@@ -307,7 +312,7 @@ def getHelp(args):
         IPAddress <ip address>      - Sets the IP address for the target PLC.
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
-        SetPLCTime                  - Sets the PLC time to the current time.
+        SetPLCTime                  - Sets the PLC time and time zone to match this computer.
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         GetFaultCodes               - Gets the Type and Code of the current controller fault.
