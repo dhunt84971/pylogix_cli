@@ -790,21 +790,26 @@ class PLC(object):
 
     def _pc_timezone(self):
         """
-        Determine the controller time zone string and DST flag that match
-        the PC running pylogix.  Returns (timezone_string, dst_flag).
+        Determine the controller time zone settings that match the PC running
+        pylogix.  Returns (timezone_string, dst_flag, dst_adjust_minutes).
+
+        dst_adjust_minutes is the daylight-saving offset the zone uses (e.g.
+        60 for +01:00, 0 for a zone with no DST).  This is written to the
+        clock object separately from the DST enable flag - without it the
+        controller shows a +00:00 adjustment and the clock reads an hour off
+        while DST is enabled.
 
         On Windows the descriptive, DST-aware zone name is used, e.g.
         "UTC-05:00 Eastern Time (US & Canada)", and the DST flag follows the
-        PC's current state so the controller applies the daylight hour.  A
-        bare "UTC+/-HH:MM" string carries no DST rule, so the controller would
-        ignore the DST flag and the clock would read an hour off while DST is
-        in effect.
+        PC's current state so the controller applies the daylight hour.
 
         On other platforms a plain "UTC+/-HH:MM" string built from the PC's
-        current (DST-adjusted) offset is used, with the DST flag left off
-        since the offset already accounts for daylight saving.
+        current (DST-adjusted) offset is used, with the DST flag and adjust
+        left off since the offset already accounts for daylight saving.
         """
         is_dst = 1 if time.localtime().tm_isdst > 0 else 0
+        # the zone's DST offset in minutes (same value year round)
+        adjust = (time.timezone - time.altzone) // 60 if time.daylight else 0
 
         # Windows: the time zone display name in the registry matches the
         # names in Logix Designer's time zone list and carries DST rules.
@@ -821,12 +826,12 @@ class PLC(object):
             #   -> "UTC-05:00 Eastern Time (US & Canada)"
             tz = display.replace("(", "", 1).replace(")", "", 1).strip()
             if tz.startswith("UTC+") or tz.startswith("UTC-"):
-                return tz, is_dst
+                return tz, is_dst, adjust
         except Exception:
             pass
 
         # Fallback (non-Windows): a plain offset that already includes DST, so
-        # the DST flag is left off to avoid the controller double counting it.
+        # the DST flag and adjust are left off to avoid double counting.
         if time.localtime().tm_isdst > 0:
             offset = -time.altzone
         else:
@@ -835,7 +840,7 @@ class PLC(object):
         offset = abs(offset)
         tz = "UTC{}{:02d}:{:02d}".format(sign, offset // 3600,
                                          (offset % 3600) // 60)
-        return tz, 0
+        return tz, 0, 0
 
     def _set_plc_time(self, dst, set_timezone=False, timezone=None):
         """
@@ -852,12 +857,13 @@ class PLC(object):
         if timezone is not None:
             set_timezone = True
 
-        # derive the time zone string (and matching DST flag) from the PC when
-        # the caller asked to set the zone but didn't supply a string
+        # derive the time zone string, DST flag and DST adjustment from the PC
+        # when the caller asked to set the zone but didn't supply a string
         if set_timezone and timezone is None:
-            timezone, auto_dst = self._pc_timezone()
+            timezone, auto_dst, dst_adjust = self._pc_timezone()
         else:
             auto_dst = time.localtime().tm_isdst
+            dst_adjust = (time.timezone - time.altzone) // 60 if time.daylight else 0
 
         # use the PC's DST state when the caller didn't specify one
         if dst is None:
@@ -882,7 +888,17 @@ class PLC(object):
             if status != 0:
                 return Response(None, current_time, status)
 
-        # set the time and DST flag together (attributes 0x06 and 0x0a)
+            # attribute 0x09 - DST adjustment in minutes (e.g. 60 for +01:00).
+            # Written in its own request, the way the Logix Designer time zone
+            # dropdown does.  Without it the controller shows a +00:00
+            # adjustment and the clock reads an hour off while DST is enabled.
+            request = self._cip_message(0x04, 0x8b, 0x01, [0x09],
+                                        [pack("<h", dst_adjust)])
+            status, ret_data = self.conn.send(request)
+            if status != 0:
+                return Response(None, current_time, status)
+
+        # set the time and DST enable flag together (attributes 0x06 and 0x0a)
         request = self._cip_message(0x04, 0x8b, 0x01, [0x06, 0x0a],
                                     [time_bytes, dst_value])
 
