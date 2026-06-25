@@ -6,7 +6,7 @@ handy for systems where an end-user does not have the Rockwell software, but nee
 Warning!  PLCs control industrial equipment and writing values to a PLC that is actively operating equipment should be done with great care and is at your own risk.
 
 Click below to download the current standalone executable for Windows 7/10:<br/>
-https://github.com/dhunt84971/pylogix_cli/releases/download/v0.1.7/pylogix_cli.exe 
+https://github.com/dhunt84971/pylogix_cli/releases/download/v0.1.8/pylogix_cli.exe 
 
 
 Execution of the application will take the form of a single command or a shell console application allowing multiple commands to be executed.
@@ -57,6 +57,7 @@ https://github.com/dmroeder/pylogix
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
         SetPLCTime                  - Sets the PLC time and time zone to match this computer.
+        SetPLCGateway <ip address>  - Sets the PLC's default gateway address.
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         * GetFaultCodes             - Gets the Type and Code of the current controller fault.
