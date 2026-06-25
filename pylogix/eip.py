@@ -175,6 +175,24 @@ class PLC(object):
         """
         return self._set_plc_time(dst, set_timezone, timezone)
 
+    def SetPLCGateway(self, gateway):
+        """
+        Sets the controller's default gateway address.
+
+        The gateway is part of the TCP/IP Interface Object's interface
+        configuration (class 0xF5, instance 1, attribute 5), which is a
+        single structure holding the IP address, subnet mask, gateway,
+        name servers and domain name.  The current configuration is read
+        first so only the gateway is changed - every other field is
+        preserved.
+
+        gateway:  the new gateway as a dotted string, e.g. "100.100.100.10".
+                  Use "0.0.0.0" to clear the gateway.
+
+        returns Response class (.TagName, .Value, .Status)
+        """
+        return self._set_plc_gateway(gateway)
+
     def GetTagList(self, allTags=True):
         """
         Retrieves the tag list from the PLC
@@ -905,6 +923,52 @@ class PLC(object):
         status, ret_data = self.conn.send(request)
 
         return Response(None, current_time, status)
+
+    def _set_plc_gateway(self, gateway):
+        """
+        Sets the PLC's default gateway in the TCP/IP Interface Object's
+        interface configuration (class 0xF5, instance 1, attribute 5).
+        """
+        conn = self.conn.connect()
+        if not conn[0]:
+            return Response(None, None, conn[1])
+
+        # validate and pack the gateway address before touching the PLC
+        try:
+            gateway_bytes = self._pack_ip(gateway)
+        except (ValueError, AttributeError):
+            return Response(None, gateway, "Invalid gateway address: {}".format(gateway))
+
+        # read the current interface configuration so we only change the
+        # gateway and preserve the IP, mask, name servers and domain name.
+        # The structure is: IP(4), mask(4), gateway(4), name server(4),
+        # name server 2(4), domain name (STRING), all little endian.
+        request = self._cip_message(0x0e, 0xf5, 0x01, 0x05)
+        status, ret_data = self.conn.send(request)
+        if status != 0:
+            return Response(None, gateway, status)
+
+        config = bytearray(ret_data[50:])
+        if len(config) < 12:
+            return Response(None, gateway, "Unexpected interface configuration length")
+
+        # replace the gateway (the third UDINT) and write it back
+        config[8:12] = gateway_bytes
+        request = self._cip_message(0x10, 0xf5, 0x01, 0x05, bytes(config))
+        status, ret_data = self.conn.send(request)
+
+        return Response(None, gateway, status)
+
+    def _pack_ip(self, address):
+        """
+        Pack a dotted IPv4 string (e.g. "100.100.100.10") into the 4 byte
+        little endian UDINT used by the TCP/IP Interface Object.
+        """
+        octets = [int(o) for o in address.strip().split(".")]
+        if len(octets) != 4 or any(o < 0 or o > 255 for o in octets):
+            raise ValueError(address)
+        a, b, c, d = octets
+        return pack("<I", (a << 24) | (b << 16) | (c << 8) | d)
 
     def _get_tag_list(self, all_tags):
         """

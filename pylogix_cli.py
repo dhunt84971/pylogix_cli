@@ -216,6 +216,14 @@ def setPLCTime(args):
     ret = comm.SetPLCTime(set_timezone=True)
     print(ret)
 
+def setPLCGateway(args):
+    gateway = args.strip()
+    if not isIPAddress(gateway):
+        print("ERROR - Invalid argument.  Please specify a gateway address, e.g. 192.168.1.1.")
+        return
+    ret = comm.SetPLCGateway(gateway)
+    print(ret)
+
 def getDeviceProperties(args):
     ret = comm.GetDeviceProperties()
     print(ret)
@@ -313,6 +321,7 @@ def getHelp(args):
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
         SetPLCTime                  - Sets the PLC time and time zone to match this computer.
+        SetPLCGateway <ip address>  - Sets the PLC's default gateway address.
         GetModuleProperties <slot>  - Gets the properties of the module in the specified slot.
         GetDeviceProperties         - Gets the properties of the connected device.
         GetFaultCodes               - Gets the Type and Code of the current controller fault.
@@ -344,6 +353,8 @@ def parseCommand(command):
             getPLCTime(getAdditionalArgs(command))
         elif (words[0] == "setplctime"):
             setPLCTime(getAdditionalArgs(command))
+        elif (words[0] == "setplcgateway"):
+            setPLCGateway(getAdditionalArgs(command))
         elif (words[0] == "getdeviceproperties"):
             getDeviceProperties(getAdditionalArgs(command))
         elif (words[0] == "getmoduleproperties"):
