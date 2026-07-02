@@ -19,8 +19,15 @@ None 12 Success
 ```
 ![Peek 2022-04-18 15-17](https://user-images.githubusercontent.com/674065/163863258-3edac336-dc3b-4469-b1a2-660256805834.gif)
 
-By default the controller in slot 0 is used.  If the controller resides in a
-different slot, the slot number may be appended to the IP address after a comma:
+### Specifying the Controller Slot
+In a chassis-based platform (such as a ControlLogix rack), the processor may
+reside in any slot.  The slot number tells pylogix_cli where in the chassis to
+find the controller.  When no slot is specified, slot 0 is assumed, which
+matches the original behavior and covers the common case (including CompactLogix
+and other single-slot controllers).
+
+To target a controller in a different slot, append the slot number to the IP
+address after a comma:
 ```
 pylogix_cli 192.168.1.10,2 Read CurrentScreen
 None 12 Success
