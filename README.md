@@ -6,7 +6,7 @@ handy for systems where an end-user does not have the Rockwell software, but nee
 Warning!  PLCs control industrial equipment and writing values to a PLC that is actively operating equipment should be done with great care and is at your own risk.
 
 Click below to download the current standalone executable for Windows 7/10:<br/>
-https://github.com/dhunt84971/pylogix_cli/releases/download/v0.1.8/pylogix_cli.exe 
+https://github.com/dhunt84971/pylogix_cli/releases/download/v0.1.9/pylogix_cli.exe 
 
 
 Execution of the application will take the form of a single command or a shell console application allowing multiple commands to be executed.
@@ -18,6 +18,17 @@ pylogix_cli 192.168.1.10 Read CurrentScreen
 None 12 Success
 ```
 ![Peek 2022-04-18 15-17](https://user-images.githubusercontent.com/674065/163863258-3edac336-dc3b-4469-b1a2-660256805834.gif)
+
+By default the controller in slot 0 is used.  If the controller resides in a
+different slot, the slot number may be appended to the IP address after a comma:
+```
+pylogix_cli 192.168.1.10,2 Read CurrentScreen
+None 12 Success
+```
+The same comma-separated syntax works with the `IPAddress` console command:
+```
+pylogix_cli> IPAddress 192.168.1.10,2
+```
 
 
 Console app example:
@@ -53,7 +64,8 @@ https://github.com/dmroeder/pylogix
 ## Currently Implemented Functions
 ```
         Help                        - Displays this list of commands.
-        IPAddress <ip address>      - Sets the IP address for the target PLC.
+        IPAddress <ip address>[,<slot>]
+                                    - Sets the IP address (and optional slot) for the target PLC.
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
         SetPLCTime                  - Sets the PLC time and time zone to match this computer.

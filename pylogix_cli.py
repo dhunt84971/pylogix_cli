@@ -14,6 +14,10 @@ console application allowing multiple commands to be executed.
 Single command syntax:
 pylogix_cli 192.168.1.10 Read CurrentScreen
 
+An optional processor slot number may be appended to the IP address after a
+comma (defaults to slot 0 when omitted):
+pylogix_cli 192.168.1.10,2 Read CurrentScreen
+
 Console app example:
 pylogix_cli 192.168.1.10
 > Read CurrentScreen
@@ -51,7 +55,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pylogix
 from pylogix.lgx_response import Response
 from pylogix import PLC
-version = "0.1.8"
+version = "0.1.9"
 comm = PLC()
 output_format = "raw"
 output_formats = ["raw", "readable", "minimal"]
@@ -204,8 +208,11 @@ def get_controller_fault_info(plc):
 
 #region CONSOLE COMMAND DEFINITIONS
 def ipAddress(args):
+    ip, slot = parseIPAndSlot(args)
     comm.Close()
-    comm.IPAddress = args
+    comm.IPAddress = ip
+    if slot is not None:
+        comm.ProcessorSlot = slot
 
 def getPLCTime(args):
     ret = comm.GetPLCTime()
@@ -317,7 +324,8 @@ def getHelp(args):
     print('''
     Commands: (Not case sensitive.)
         Help                        - Displays this list of commands.
-        IPAddress <ip address>      - Sets the IP address for the target PLC.
+        IPAddress <ip address>[,<slot>]
+                                    - Sets the IP address (and optional slot) for the target PLC.
         Quit                        - Leave console application.
         GetPLCTime                  - Returns the PLC time.
         SetPLCTime                  - Sets the PLC time and time zone to match this computer.
@@ -348,7 +356,7 @@ def parseCommand(command):
         if (words[0] == "help"):
             getHelp(command)
         elif (words[0] == "ipaddress"):
-            ipAddress(words[1])
+            ipAddress(getAdditionalArgs(command))
         elif (words[0] == "getplctime"):
             getPLCTime(getAdditionalArgs(command))
         elif (words[0] == "setplctime"):
@@ -392,7 +400,24 @@ def commandLoop():
 
 #region HELPER FUNCTIONS
 def isIPAddress(value):
-    return len(value.split(".")) == 4
+    ip, _ = parseIPAndSlot(value)
+    return len(ip.split(".")) == 4
+
+def parseIPAndSlot(value):
+    """
+    Splits a target specifier into an IP address and an optional slot number.
+    The slot may be appended to the IP address after a comma, e.g.
+    "192.168.1.10,2".  When no slot is given the slot is returned as None so
+    the caller can leave the pylogix default (slot 0) untouched.
+    """
+    parts = value.split(",", 1)
+    ip = parts[0].strip()
+    slot = None
+    if len(parts) > 1:
+        slotStr = parts[1].strip()
+        if slotStr.isdigit():
+            slot = int(slotStr)
+    return ip, slot
 
 def getAdditionalArgs(command):
     words = command.casefold().split()
@@ -438,7 +463,10 @@ def main():
     arguments = sys.argv
     if (len(arguments) > 1):
         if (isIPAddress(arguments[1])):
-            comm.IPAddress = arguments[1]
+            ip, slot = parseIPAndSlot(arguments[1])
+            comm.IPAddress = ip
+            if slot is not None:
+                comm.ProcessorSlot = slot
             if (len(arguments) > 2):
                 parseCommand(" ".join(arguments[2:]))
             else:
